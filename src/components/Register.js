@@ -21,7 +21,6 @@ function Register ({ handleRegister }) {
       return;
     }
     const { email, password } = data;
-    console.log({ email, password });
     handleRegister({ email, password });
 
   }

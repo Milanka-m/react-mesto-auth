@@ -4,7 +4,6 @@ function Login ({ handleLogin }) {
   const [data, setData] = React.useState({
     email: '',
     password: '',
- /*    message: '' */
   })
   
   function handleChange(e) {
@@ -44,9 +43,6 @@ function Login ({ handleLogin }) {
           <fieldset className="popup__form-handlers">
               <button type="submit" className="auth__form-button link">Войти</button>
           </fieldset>
-    {/*       <p>
-          {data.message}
-        </p> */}
         </form>
       </div>
     )

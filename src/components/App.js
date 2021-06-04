@@ -10,9 +10,12 @@ import ImagePopup from './ImagePopup';
 import EditProfilePopup from './EditProfilePopup';
 import EditAvatarPopup from './EditAvatarPopup';
 import AddPlacePopup from './AddPlacePopup';
+import InfoTooltip from './InfoTooltip';
 import ProtectedRoute from './ProtectedRoute';
 import Login from './Login';
 import Register from './Register';
+import iconErrorAuth from '../images/icon-auth-error.svg';
+import iconRegisterAuth from '../images/icon-auth-login.svg';
 import api from '../utils/api';
 import * as auth from '../auth';
 
@@ -21,6 +24,7 @@ function App() {
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = React.useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = React.useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false);
+  const [isInfoRegisterPopupOpen, setIsInfoRegisterPopupOpen] = React.useState(false)
 
   const [isImagePopupOpen, setIsImagePopupOpen] = React.useState(false);
   const [selectedCard, setSelectedCard] = React.useState({});
@@ -34,6 +38,7 @@ function App() {
   const [loggedIn, setLoggedIn] = React.useState(false);
   // стейт в котором хранится email пользователя
   const [userEmail, setUserEmail] = React.useState('');
+  const [errorMessage, setErrorMessage] = React.useState(false);
   
   const history = useHistory();
 
@@ -72,10 +77,16 @@ function App() {
         const { email } = data;
         console.log(email);
         localStorage.setItem('jwt', jwt);
-        setUserEmail(email)
+        setUserEmail(email);
         setLoggedIn(true);
+        setErrorMessage(false);
+        setIsInfoRegisterPopupOpen(true);
       })
-      .catch(handleError)
+      .catch((error) => {
+        console.log(error);
+        setErrorMessage(true);
+        setIsInfoRegisterPopupOpen(true);
+      })
   }
 
   function handleLogout () {
@@ -91,19 +102,16 @@ function App() {
   // получает токен из localStorage, если он не пустой получет с сервера объект со свойством email
   function checkToken () {
     const jwt = localStorage.getItem('jwt');
-    console.log(jwt)
     if (jwt) {
       auth.getContent(jwt)
         .then(res => {
-          console.log(res)
           const { data } = res;
           const { email } = data;
-          console.log(email)
           setUserEmail(email)
           // пользователь залогинен
           setLoggedIn(true);
         })
-        .catch(error => console.log(error))
+        .catch(handleError)
     }
    
   }
@@ -115,7 +123,7 @@ function App() {
       .then(res => {
         setCards(res);
       }) 
-      .catch(err => console.log(err)) 
+      .catch(handleError) 
   }, []); 
 
   // функция лайка и дизлайка карточки
@@ -128,13 +136,13 @@ function App() {
         .then((newCard) => {
           setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
         })
-        .catch(err => console.log(err))
+        .catch(handleError)
     } else {
             api.removeLikeCard(card._id, isLiked)
               .then((newCard) => {
                 setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
               })
-              .catch(err => console.log(err))
+              .catch(handleError)
            }
   } 
 
@@ -145,7 +153,7 @@ function App() {
       .then(() => {
         setCards((state) => state.filter((c) => c._id !== card._id))
       })
-      .catch(err => console.log(err))
+      .catch(handleError)
   }
 
   
@@ -166,6 +174,7 @@ function App() {
     setIsAddPlacePopupOpen(false);
     setIsEditAvatarPopupOpen(false);
     setIsImagePopupOpen(false);
+    setIsInfoRegisterPopupOpen(false);
   }
 
   function handleCardClick(card) {
@@ -180,7 +189,7 @@ function App() {
       .then(user => {
         setCurrentUser(user);
       })
-      .catch(err => console.log(err))
+      .catch(handleError)
   }, [])
 
   // Обработчик api запроса для обновления профильных данных
@@ -190,7 +199,7 @@ function App() {
         setCurrentUser(userData);
         closeAllPopups();
       })
-      .catch(err => console.log(err))
+      .catch(handleError)
   } 
 
   // Обработчик api запроса для обновления аватара
@@ -200,7 +209,7 @@ function App() {
         setCurrentUser(userData);
         closeAllPopups();
         })
-      .catch(err => console.log(err))
+      .catch(handleError)
   }
 
   // Обработчик api запроса для создания новой карточки
@@ -211,7 +220,7 @@ function App() {
         setCards([...cards, newCard]); 
         closeAllPopups();
       })
-      .catch(err => console.log(err))
+      .catch(handleError)
   }
 
   return (
@@ -232,7 +241,7 @@ function App() {
               onEditAvatar={handleEditAvatarClick} 
               onCardClick={handleCardClick}
               component={Main}>
-                <Footer />
+        
             </ProtectedRoute>
 
             <Route exat path="/sign-in">
@@ -242,10 +251,25 @@ function App() {
             <Route path="/sign-up">
               <Register handleRegister={handleRegister} />
             </Route>
-            
+
+            {errorMessage ? 
+              <InfoTooltip 
+                icon={iconErrorAuth} 
+                messege="Что-то пошло не так!" 
+                isOpen={isInfoRegisterPopupOpen} 
+                onClose={closeAllPopups} /> : 
+              <InfoTooltip 
+                icon={iconRegisterAuth} 
+                messege="Вы успешно зарегистрировались!" 
+                isOpen={isInfoRegisterPopupOpen} 
+                onClose={closeAllPopups} />
+            }
+
             <Route>
               {loggedIn ? <Redirect to="/" /> : <Redirect to="/sign-in" />}
             </Route>
+
+            <Footer />
 
             <EditProfilePopup onUpdateUser={handleUpdateUser} isOpen={isEditProfilePopupOpen} onClose={closeAllPopups}/>
          
