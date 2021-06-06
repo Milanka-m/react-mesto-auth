@@ -25,7 +25,7 @@ function Card({card, onCardClick, onCardLike, onCardDelete }) {
 
   return ( 
     <article className="elements__card"> 
-      <div className="elements__card-image" style={{ backgroundImage: `url(${card.link})` }} alt={card.name} onClick={handleClick}></div> 
+      <div className="elements__card-image" style={{ backgroundImage: `url(${card.link})` }} onClick={handleClick}></div> 
       <button className={`elements__icon-delete ${cardDeleteButtonClassName} link`} type="button" aria-label="Удалить карточку" onClick={handleDeleteClick}>
       </button> 
       <div className="elements__label"> 

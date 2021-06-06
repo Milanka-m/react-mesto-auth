@@ -5,6 +5,16 @@ class Api {
     this._groupID = groupID;
   }
 
+  // приватный метод, который получает ответ с сервера и возвращает данные или ошибку
+  _checkResponse(res) {
+    if (res.ok) {
+      // если ответ сервера 200, возвращаются данные
+      return res.json();
+    }
+    // иначе возвращаем промис с ошибкой
+    return Promise.reject(`Ошибка ${res.status}`);
+  }
+
   //публичный метод, который получает информацию о пользователе с сервера
   getUsers() {
     return fetch(`${this._address}/v1/${this._groupID}/users/me`, {
@@ -12,14 +22,7 @@ class Api {
         authorization: this._token
       }
     })
-      .then((response) => {
-         if (response.ok) {
-         // если ответ сервера 200, возвращаются данные
-         return response.json();
-      }
-        // иначе возвращаем промис с ошибкой
-       return Promise.reject(`Ошибка ${response.status}`);
-    });
+      .then(this._checkResponse)
   }
 
   // метод, который отправляет запрос на сервер для загрузки карточек
@@ -29,12 +32,7 @@ class Api {
         authorization: this._token
       }
     })
-      .then((response) => {
-        if(response.ok) {
-         return response.json();
-       }
-        return Promise.reject(`Ощибка ${response.status}`);
-      });
+      .then(this._checkResponse)
   }
 
   // метод, который отправляет запрос на сервер для редактирования данных профиля
@@ -50,12 +48,7 @@ class Api {
         about: data.about
       })
     })
-      .then((response) => {
-       if(response.ok) {
-         return response.json();
-       }
-        return Promise.reject(`Ощибка ${response.status}`);
-      });
+      .then(this._checkResponse)
   }
 
   // метод добавления карточки на сервер
@@ -71,12 +64,7 @@ class Api {
         link: data.link
       })
     })
-      .then((response) => {
-        if(response.ok) {
-          return response.json();
-       }
-       return Promise.reject(`Ощибка ${response.status}`);
-      });
+      .then(this._checkResponse)
   }
 
   // метод удаления карточки
@@ -87,12 +75,7 @@ class Api {
           authorization: this._token
       }
     })
-      .then((response) => {
-        if(response.ok) {
-          return Promise.resolve('success');
-        }
-        return Promise.reject(`Ощибка ${response.status}`);
-      })
+      .then(this._checkResponse)
 
   } 
 
@@ -103,12 +86,7 @@ class Api {
         authorization: this._token
       }
     })
-      .then((response) => {
-        if(response.ok) {
-          return response.json();
-       }
-       return Promise.reject(`Ощибка ${response.status}`);
-    });
+      .then(this._checkResponse)
   }
 
   removeLikeCard(id) {
@@ -118,12 +96,7 @@ class Api {
         authorization: this._token
       }
     })
-      .then((response) => {
-        if(response.ok) {
-          return response.json();
-       }
-       return Promise.reject(`Ощибка ${response.status}`);
-    });
+      .then(this._checkResponse)
   }
 
   editAvatar({avatar}) { 
@@ -137,15 +110,8 @@ class Api {
         avatar: avatar, 
       }) 
     }) 
-      .then((response) => {  
-        if(response.ok) {  
-          return response.json();  
-       }  
-       return Promise.reject(`Ощибка ${response.status}`);  
-      });  
+      .then(this._checkResponse)
   } 
- 
-
 }
 
 const api = new Api({

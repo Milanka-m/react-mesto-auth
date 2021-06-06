@@ -27,7 +27,7 @@ function Register ({ handleRegister }) {
   
     return (
       <div className="auth">
-        <form className="auth__form" onSubmit={handleSubmit} noValidate>
+        <form className="auth__form" onSubmit={handleSubmit}>
           <div className="auth__form-container">
             <h2 className="auth__form-title">Регистрация</h2> 
             <fieldset className="auth__form-input-container">

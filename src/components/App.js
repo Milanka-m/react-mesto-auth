@@ -14,10 +14,8 @@ import InfoTooltip from './InfoTooltip';
 import ProtectedRoute from './ProtectedRoute';
 import Login from './Login';
 import Register from './Register';
-import iconErrorAuth from '../images/icon-auth-error.svg';
-import iconRegisterAuth from '../images/icon-auth-login.svg';
 import api from '../utils/api';
-import * as auth from '../auth';
+import * as auth from '../utils/auth';
 
  
 function App() {
@@ -61,6 +59,7 @@ function App() {
   }
 
   function handleLogin ({ email, password }) {
+    setUserEmail(email);
     auth.authorize(email, password)
     .then((res) => {
       const { token } = res;
@@ -75,7 +74,6 @@ function App() {
       .then((res) => {
         const { jwt, data } = res;
         const { email } = data;
-        console.log(email);
         localStorage.setItem('jwt', jwt);
         setUserEmail(email);
         setLoggedIn(true);
@@ -217,59 +215,47 @@ function App() {
     api.addCard({ name, link })
       .then(newCard => {
         setCurrentCard(newCard);
-        setCards([...cards, newCard]); 
+        setCards([newCard, ...cards]); 
         closeAllPopups();
       })
       .catch(handleError)
   }
 
   return (
-  <Switch>
     <CurrentUserContext.Provider value={currentUser}>
       <CardsContext.Provider value={currentCard}>
         <div className="page">
           <div className="root">
-          
             <Header email={userEmail} handleLogout={handleLogout} />
-         
-            <ProtectedRoute path="/" loggedIn={loggedIn} 
-              cards={cards}
-              onCardLike={handleCardLike}
-              onCardDelete={handleCardDelete}
-              onEditProfile={handleEditProfileClick} 
-              onAddPlace={handleAddPlaceClick} 
-              onEditAvatar={handleEditAvatarClick} 
-              onCardClick={handleCardClick}
-              component={Main}>
-        
-            </ProtectedRoute>
+            <Switch>
+           
+              <ProtectedRoute exact path="/" loggedIn={loggedIn} 
+                cards={cards}
+                onCardLike={handleCardLike}
+                onCardDelete={handleCardDelete}
+                onEditProfile={handleEditProfileClick} 
+                onAddPlace={handleAddPlaceClick} 
+                onEditAvatar={handleEditAvatarClick} 
+                onCardClick={handleCardClick}
+                component={Main}>
+              </ProtectedRoute>
 
-            <Route exat path="/sign-in">
-              <Login handleLogin={handleLogin} />
-            </Route>
+              <Route exat path="/sign-in">
+                <Login handleLogin={handleLogin} />
+              </Route>
 
-            <Route path="/sign-up">
-              <Register handleRegister={handleRegister} />
-            </Route>
+              <Route path="/sign-up">
+                <Register handleRegister={handleRegister} />
+              </Route>
 
-            {errorMessage ? 
-              <InfoTooltip 
-                icon={iconErrorAuth} 
-                messege="Что-то пошло не так!" 
-                isOpen={isInfoRegisterPopupOpen} 
-                onClose={closeAllPopups} /> : 
-              <InfoTooltip 
-                icon={iconRegisterAuth} 
-                messege="Вы успешно зарегистрировались!" 
-                isOpen={isInfoRegisterPopupOpen} 
-                onClose={closeAllPopups} />
-            }
-
-            <Route>
-              {loggedIn ? <Redirect to="/" /> : <Redirect to="/sign-in" />}
-            </Route>
+              <Route>
+                {loggedIn ? <Redirect to="/" /> : <Redirect to="/sign-in" />}
+              </Route>
+            </Switch>
 
             <Footer />
+          
+            <InfoTooltip error={errorMessage} isOpen={isInfoRegisterPopupOpen} onClose={closeAllPopups} /> 
 
             <EditProfilePopup onUpdateUser={handleUpdateUser} isOpen={isEditProfilePopupOpen} onClose={closeAllPopups}/>
          
@@ -290,7 +276,6 @@ function App() {
  
       </CardsContext.Provider>
     </CurrentUserContext.Provider>
-  </Switch>
   );
 }
 
