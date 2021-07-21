@@ -35,48 +35,58 @@ function App() {
   // стейт который отвечает залогинен пользователь или нет
   const [loggedIn, setLoggedIn] = React.useState(false);
   // стейт в котором хранится email пользователя
-  const [userEmail, setUserEmail] = React.useState('');
+  const [userInfoData, setUserInfoData] = React.useState({
+    email: '',
+  });
   const [errorMessage, setErrorMessage] = React.useState(false);
   
   const history = useHistory();
-
-  // побочный эффект
-  //checkToken() вызовится один раз при монтировании компонента
-  React.useEffect(() => {
-    checkToken();
-  }, [])
-
-  // побочный эффект
-  // если loggedIn = true, произайдёт редирект на главную страницу
-  React.useEffect(() => {
-    if (loggedIn) {
-      history.push('/');
-    }
-  }, [loggedIn])
 
   function handleError (error) {
     console.log(error);
   }
 
+  React.useEffect(() => {
+    checkToken();
+  }, [])
+
   function handleLogin ({ email, password }) {
-    setUserEmail(email);
     auth.authorize(email, password)
     .then((res) => {
-      const { token } = res;
-      localStorage.setItem('jwt', token);
+      localStorage.setItem('token', res.token);
+      setUserInfoData({
+        email: email,
+      })
       setLoggedIn(true);
+      history.push('/');
     })
     .catch(handleError)
+  }
+
+  // функция проверяет аутитенсифицирован ли пользователь
+  // получает токен из localStorage, если он не пустой получет с сервера объект со свойством email и _id
+  function checkToken () {
+    const token = localStorage.getItem('token');
+    if (token) {
+      auth.getContent(token)
+        .then(res => {
+          const { email, _id } = res.user;
+          setUserInfoData({
+            email: email,
+            _id: _id,
+          })
+          // пользователь залогинен
+          setLoggedIn(true);
+          history.push('/');
+        })
+        .catch(handleError)
+    }
   }
 
   function handleRegister ({ email, password }) {
     auth.register(email, password)
       .then((res) => {
-        const { jwt, data } = res;
-        const { email } = data;
-        localStorage.setItem('jwt', jwt);
-        setUserEmail(email);
-        setLoggedIn(true);
+        history.push('/sign-in');
         setErrorMessage(false);
         setIsInfoRegisterPopupOpen(true);
       })
@@ -89,67 +99,66 @@ function App() {
 
   function handleLogout () {
     // очищаем пользовательские данные
-    setUserEmail('');
+    setUserInfoData({
+      email: '',
+      _id: '',
+    });
     // возвращаем loggedIn в первоначальное состояние
     setLoggedIn(false);
     // очищаем localStorage от токена
-    localStorage.removeItem('jwt');
+    localStorage.removeItem('token');
   }
 
-  // функция проверяет аутитенсифицирован ли пользователь
-  // получает токен из localStorage, если он не пустой получет с сервера объект со свойством email
-  function checkToken () {
-    const jwt = localStorage.getItem('jwt');
-    if (jwt) {
-      auth.getContent(jwt)
-        .then(res => {
-          const { data } = res;
-          const { email } = data;
-          setUserEmail(email)
-          // пользователь залогинен
-          setLoggedIn(true);
-        })
-        .catch(handleError)
+
+  React.useEffect(() => {
+    if (loggedIn) {
+      checkToken();
+        api.getCards()
+          .then(cardsData => {
+            setCards(cardsData);
+          })
+          .catch(handleError)
     }
-   
-  }
-  
-  React.useEffect(() => { 
-    api.getCards() 
-    // если ответ сервера положительный, в стейт приходит массив карточек 
-    // каждый объект карточки из данного массива имеет следующие поля: _id, name, link, likes 
-      .then(res => {
-        setCards(res);
-      }) 
-      .catch(handleError) 
-  }, []); 
+  }, [loggedIn])
 
+  React.useEffect(() => {
+    if (loggedIn) {
+      checkToken();
+        api.getUsers()
+          .then((userData) => {
+            setCurrentUser(userData.user)
+          })
+          .catch(handleError);
+    } 
+  }, [loggedIn])
+  
   // функция лайка и дизлайка карточки
   function handleCardLike(card) {
     // Снова проверяем, есть ли уже лайк на этой карточке
-    const isLiked = card.likes.some(i => i._id === currentUser._id);
+    const isLiked = card.card.likes.some(i => i === currentUser._id);
     if (!isLiked) {
       // Отправляем запрос в API и получаем обновлённые данные карточки
-      api.addLikeCard(card._id, !isLiked)
+      api.addLikeCard(card.card._id, !isLiked)
         .then((newCard) => {
-          setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
+          setCards((state) => state.map((c) => c._id === card.card._id ? newCard : c));
         })
         .catch(handleError)
     } else {
-            api.removeLikeCard(card._id, isLiked)
+            api.removeLikeCard(card.card._id, isLiked)
               .then((newCard) => {
-                setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
+                setCards((state) => state.map((c) => c._id === card.card._id ? newCard : c));
               })
               .catch(handleError)
            }
   } 
 
+  
   // функция удаления карточки
   function handleCardDelete(card) {
     // Отправляем запрос в API и получаем обновлённые данные карточки
-    api.removeCard(card._id)
+    api.removeCard(card.card._id)
       .then(() => {
-        setCards((state) => state.filter((c) => c._id !== card._id))
+        setCards((state) => state.filter((c) => c._id !== card.card._id))
       })
       .catch(handleError)
   }
@@ -176,35 +185,25 @@ function App() {
   }
 
   function handleCardClick(card) {
-    setSelectedCard(card);
+    setSelectedCard(card.card);
     setIsImagePopupOpen(true);
   }
 
-  // эффект при монтировании компонента
-  // формирует api запрос для получения данных пользователя при загрузке страницы
-  React.useEffect(() => {
-    api.getUsers()
-      .then(user => {
-        setCurrentUser(user);
-      })
-      .catch(handleError)
-  }, [])
-
   // Обработчик api запроса для обновления профильных данных
-  function handleUpdateUser({ name, about }) {
-    api.editUser({ name, about })
+  function handleUpdateUser(newUserData) {
+    api.editUser(newUserData, userInfoData._id)
       .then(userData => {
-        setCurrentUser(userData);
+        setCurrentUser(userData.user);
         closeAllPopups();
       })
       .catch(handleError)
   } 
 
   // Обработчик api запроса для обновления аватара
-  function handleUpdateAvatar({avatar}) {
-    api.editAvatar({avatar})
+  function handleUpdateAvatar(data) {
+    api.editAvatar(data, userInfoData._id)
       .then((userData) => {
-        setCurrentUser(userData);
+        setCurrentUser(userData.user);
         closeAllPopups();
         })
       .catch(handleError)
@@ -215,7 +214,7 @@ function App() {
     api.addCard({ name, link })
       .then(newCard => {
         setCurrentCard(newCard);
-        setCards([newCard, ...cards]); 
+        setCards([newCard.card, ...cards]); 
         closeAllPopups();
       })
       .catch(handleError)
@@ -226,10 +225,14 @@ function App() {
       <CardsContext.Provider value={currentCard}>
         <div className="page">
           <div className="root">
-            <Header email={userEmail} handleLogout={handleLogout} />
+            <Header 
+              email={userInfoData.email} 
+              handleLogout={handleLogout} 
+              loggedIn={loggedIn}
+            />
             <Switch>
-           
-              <ProtectedRoute exact path="/" loggedIn={loggedIn} 
+              <ProtectedRoute exact path="/" 
+                loggedIn={loggedIn} 
                 cards={cards}
                 onCardLike={handleCardLike}
                 onCardDelete={handleCardDelete}

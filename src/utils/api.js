@@ -1,8 +1,6 @@
 class Api {
-  constructor({ address, token, groupID }) {
+  constructor({ address }) {
     this._address = address;
-    this._token = token;
-    this._groupID = groupID;
   }
 
   // приватный метод, который получает ответ с сервера и возвращает данные или ошибку
@@ -17,9 +15,10 @@ class Api {
 
   //публичный метод, который получает информацию о пользователе с сервера
   getUsers() {
-    return fetch(`${this._address}/v1/${this._groupID}/users/me`, {
+    return fetch(`${this._address}/users/me`, {
       headers: {
-        authorization: this._token
+        authorization: `Bearer ${localStorage.getItem('token')}`,
+        'Content-type': 'application/json'
       }
     })
       .then(this._checkResponse)
@@ -27,9 +26,10 @@ class Api {
 
   // метод, который отправляет запрос на сервер для загрузки карточек
   getCards() {
-    return fetch(`${this._address}/v1/${this._groupID}/cards`, {
+    return fetch(`${this._address}/cards`, {
       headers: {
-        authorization: this._token
+        authorization: `Bearer ${localStorage.getItem('token')}`,
+        'Content-type': 'application/json'
       }
     })
       .then(this._checkResponse)
@@ -37,10 +37,10 @@ class Api {
 
   // метод, который отправляет запрос на сервер для редактирования данных профиля
   editUser(data) {
-    return fetch(`${this._address}/v1/${this._groupID}/users/me`, {
+    return fetch(`${this._address}/users/me`, {
       method: 'PATCH',
       headers: {
-        authorization: this._token,
+        authorization: `Bearer ${localStorage.getItem('token')}`,
         'Content-type': 'application/json'
       },
       body: JSON.stringify({
@@ -53,10 +53,10 @@ class Api {
 
   // метод добавления карточки на сервер
   addCard(data) {
-    return fetch(`${this._address}/v1/${this._groupID}/cards`, {
+    return fetch(`${this._address}/cards`, {
       method: 'POST',
       headers: {
-        authorization: this._token,
+        authorization: `Bearer ${localStorage.getItem('token')}`,
         'Content-type': 'application/json'
       },
       body: JSON.stringify({
@@ -69,10 +69,11 @@ class Api {
 
   // метод удаления карточки
   removeCard(id) {
-    return fetch(`${this._address}/v1/${this._groupID}/cards/${id}`, {
+    return fetch(`${this._address}/cards/${id}`, {
       method: 'DELETE',
       headers: {
-          authorization: this._token
+        authorization: `Bearer ${localStorage.getItem('token')}`,
+        'Content-type': 'application/json'
       }
     })
       .then(this._checkResponse)
@@ -80,34 +81,36 @@ class Api {
   } 
 
   addLikeCard(id) {
-    return fetch(`${this._address}/v1/${this._groupID}/cards/likes/${id}`, {
+    return fetch(`${this._address}/cards/${id}/likes`, {
       method: 'PUT',
       headers: {
-        authorization: this._token
+        authorization: `Bearer ${localStorage.getItem('token')}`,
+        'Content-type': 'application/json'
       }
     })
       .then(this._checkResponse)
   }
 
   removeLikeCard(id) {
-    return fetch(`${this._address}/v1/${this._groupID}/cards/likes/${id}`, {
+    return fetch(`${this._address}/cards/${id}/likes`, {
       method: 'DELETE',
       headers: {
-        authorization: this._token
+        authorization: `Bearer ${localStorage.getItem('token')}`,
+        'Content-type': 'application/json'
       }
     })
       .then(this._checkResponse)
   }
 
-  editAvatar({avatar}) { 
-    return fetch(`${this._address}/v1/${this._groupID}/users/me/avatar`, { 
+  editAvatar(data) { 
+    return fetch(`${this._address}/users/me/avatar`, { 
       method: 'PATCH', 
       headers: { 
-        authorization: this._token, 
+        authorization: `Bearer ${localStorage.getItem('token')}`,
         'Content-type': 'application/json' 
       }, 
       body: JSON.stringify({ 
-        avatar: avatar, 
+        avatar: data.avatar, 
       }) 
     }) 
       .then(this._checkResponse)
@@ -115,9 +118,7 @@ class Api {
 }
 
 const api = new Api({
-  address: 'https://mesto.nomoreparties.co',
-  token: '6db4154b-d992-4850-8211-1b620ba1fb44',
-  groupID: 'cohort-22'
-});
+  address: 'https://api.projectmesto.milana.nomoredomains.monster',
+}); 
 
 export default api;

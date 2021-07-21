@@ -29,7 +29,7 @@ function Main({ cards, onCardLike, onCardDelete, onEditAvatar, onEditProfile, on
       <section className="elements"> 
           {cards.map(card => { 
             return ( 
-              <Card card={card}
+              <Card card={{ card }}
               key={card._id} 
               onCardLike={onCardLike}
               onCardDelete={onCardDelete}
