@@ -8,11 +8,11 @@
 
 -------
 ### Стек:
-* HTML5, CSS3;
-* Java Script;
-* Node.js;
-* React.js;
-* API;
+* HTML5, CSS3
+* Java Script
+* Node.js
+* React.js
+* API
 * БЭМ
 -------
 ### Используемые технологии:
